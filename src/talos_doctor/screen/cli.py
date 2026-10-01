@@ -3,12 +3,14 @@
     talos-doctor pr OWNER/REPO NUMBER [--out DIR] [--json]   a GitHub pull request, fetched as text only
     talos-doctor scan --diff FILE [--out DIR] [--json]        a unified diff (git diff, a .patch)
     talos-doctor scan PATH… [--out DIR] [--json]              files or folders, every line as if added
+    … --jev [--max-usd 0.05]                                  and let Jev read it after the rules (talos_doctor.screen.jev)
 
 The verdict: block (no agent reads it before a person has), review (an agent may read the cleaned view only),
 clean (no rule fired). --out writes report.md, findings.json and cleaned.diff, all safe to give an agent: none
 of them repeats a flagged text. The exit code is 2 for block, 1 for review, 0 for clean.
 
-This is the deterministic stage. It screens what a model would read; it does not make running the change safe.
+The rules always run; Jev (--jev) reads the change after them. The screen covers what a model would read; it does
+not make running the change safe.
 """
 
 from __future__ import annotations
@@ -21,6 +23,7 @@ from pathlib import Path
 
 from talos_doctor import __version__
 from talos_doctor.screen import engine
+from talos_doctor.screen import jev as jevstage
 from talos_doctor.screen.github import FetchError, pull_request
 
 TEXT_SUFFIXES = {".py", ".js", ".ts", ".tsx", ".jsx", ".md", ".txt", ".json", ".toml", ".yml", ".yaml", ".sh", ".html",
@@ -48,8 +51,13 @@ def _files(paths: list[str]) -> list[engine.Piece]:
 
 
 def report(findings, verdict: str, meta: dict) -> str:
+    stages = "the rules and Jev" if meta.get("jev") else "the rules (Jev not asked: --jev)"
     lines = [f"# Screen of {meta.get('what', 'a change')}", "",
-             f"talos-doctor {__version__}, the deterministic stage. {VERDICT_TEXT[verdict]}", ""]
+             f"talos-doctor {__version__}, {stages}. {VERDICT_TEXT[verdict]}", ""]
+    if meta.get("jev"):
+        j = meta["jev"]
+        lines.append(f"Jev read {j['chunks']} pieces for ${j['spent_usd']:.4f}.")
+    findings = [f for f in findings if not (f.rule.startswith("jev.") and not f.detail)]   # one line per piece
     for k in ("url", "author", "base", "head", "files", "commits"):
         if meta.get(k) not in (None, ""):
             lines.append(f"- {k}: {meta[k]}")
@@ -86,6 +94,8 @@ def main(argv: list[str]) -> int:
     p.add_argument("--out", help="write report.md, findings.json and cleaned.diff here")
     p.add_argument("--json", action="store_true", help="the findings as JSON on standard output")
     p.add_argument("--rules", help="another rules file (default: the one shipped with the doctor)")
+    p.add_argument("--jev", action="store_true", help="let Jev read the change after the rules (needs a Jev key)")
+    p.add_argument("--max-usd", type=float, default=0.05, help="the most the Jev stage may cost (default 0.05)")
     a = p.parse_args(argv[1:])
     rules = engine.load_rules(a.rules)
     try:
@@ -103,6 +113,13 @@ def main(argv: list[str]) -> int:
         print(f"talos-doctor: {e}", file=sys.stderr)
         return 3
     findings = engine.screen(pieces, rules)
+    if a.jev:
+        try:
+            jf, meta["jev"] = jevstage.screen(pieces, max_usd=a.max_usd)
+        except jevstage.JevError as e:
+            print(f"talos-doctor: {e}", file=sys.stderr)
+            return 3
+        findings += jf
     v = engine.verdict(findings)
     rep = report(findings, v, meta)
     if a.out:

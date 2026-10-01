@@ -15,6 +15,9 @@ The promises, held by tests/test_doctor.py:
 4. **The screen never repeats what it flags.** A Finding carries a rule, a place and a safe description,
    never the matched text; the cleaned view withholds flagged lines. `tests/test_screen.py` holds it with
    canary samples. Test samples carry a harmless canary (reply with CANARY-…), never a real payload.
+6. **A Jev key is read only for --jev** (screen/jev.py), from the environment or the Keychain item
+   typesafe-api-key, and sent only to Jev's endpoint. The thresholds come from measurements: change them only
+   with a new measurement, recorded in docs/journal/.
 5. **A pull request is read as text** through GitHub's API (GET /repos/…/pulls only), never checked out.
 
 A new screen rule: an entry in `screen/rules.json` with a reason (`why`), a canary sample in

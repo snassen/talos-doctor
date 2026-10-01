@@ -243,13 +243,16 @@
   },
   {
    "id": "code.secret-access",
-   "version": 1,
+   "version": 2,
    "kind": "regex",
    "severity": "flag",
    "applies": "added",
-   "why": "New code that reads secrets (keychains, SSH keys, tokens) needs a human look.",
+   "why": "New code that reads secrets (keychains, SSH keys, tokens) needs a human look. Code files only: docs name tokens all the time.",
    "pattern": "find-generic-password[^\\n]*\\s-w\\b|\\.ssh/(id_|authorized_keys)|\\bkeyring\\.get_password\\b|GITHUB_TOKEN|AWS_SECRET|os\\.environ\\b[^\\n]{0,40}(token|secret|key|password)",
-   "ignore_case": true
+   "ignore_case": true,
+   "paths": [
+    "\\.(py|js|ts|tsx|jsx|mjs|cjs|sh|bash|zsh|rb|go|rs|java|kt|swift|php|ps1|c|cc|cpp|h)$|(^|/)(Makefile|Dockerfile)$"
+   ]
   },
   {
    "id": "path.agent-instructions",

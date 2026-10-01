@@ -31,6 +31,7 @@ talos-doctor pr OWNER/REPO NUMBER --out review/   # a GitHub pull request (GITHU
 talos-doctor scan --diff change.patch             # a unified diff, or - for standard input
 talos-doctor scan path/to/folder                  # files and folders, every line as if added
 talos-doctor scan ... --json                      # the findings as JSON, for a script or a pipeline
+talos-doctor pr OWNER/REPO NUMBER --jev           # and let Jev read it after the rules (a Jev key needed)
 ```
 
 The verdict, and the exit code:
@@ -68,15 +69,23 @@ agent:
    - **Files that matter more**: files agents read as instructions (`AGENTS.md`, `CLAUDE.md`, `.cursorrules`,
      Copilot instructions, skills, MCP configuration), files that run code (CI, install scripts, hooks,
      `conftest.py`), git plumbing, dependencies.
-3. **A model that cannot act (next).** Rules miss paraphrases. The next stage asks Jev, a hosted classifier
-   with no tools that answers only with probabilities, three bounded questions about each piece: does it try to
-   steer a model, does it hide something from the reviewers, does it push for approval? In a first trial it
-   recognised all 7 test attacks, including 5 paraphrased ones the rules missed, for a fraction of a cent.
+3. **A model that cannot act** (`--jev`). Rules miss paraphrases. Jev, a hosted classifier with no tools that
+   answers only with probabilities, reads the change in pieces and answers three bounded questions: does it try to
+   steer a model, does it hide something from the reviewers, does it push for approval? Measured on 19,481 samples
+   from public datasets: the rules alone catch 13% of attacks at 0.7% false alarms, Jev 77% at 7%, the two together
+   79%, and each catches what the other misses ([the journal](docs/journal/)). A pull request costs a fraction of
+   a cent; the run is estimated first and refused above `--max-usd`. The key is your own: `TYPESAFE_API_KEY`, or
+   the macOS Keychain item `typesafe-api-key`.
 4. **The agent reads the cleaned copy**, in a session with no access to anything that matters, and reports to
    you. You decide.
 
 What it does **not** cover: whether *running* the change is safe. Malicious code needs no instructions to a
 model; read and test it in a throwaway environment as you always would.
+
+## How it was made
+
+[The developer journal](docs/journal/) records each step: the rules and their calibration, the first trial of
+Jev, the measurement on public datasets (with their licences and pinned revisions), and the thresholds chosen.
 
 ## Made for Talos
 
@@ -101,6 +110,7 @@ talos-doctor --guide microsoft-365   # microsoft-365, imap, jev, services, tails
 - **The screen never repeats what it flags.** A finding carries a rule, a place and a safe description, never
   the matched text. The tests hold it with synthetic attacks whose payload is a canary.
 - **It reads changes as text.** GitHub's API, GET requests for pull requests only; no checkout.
+- **A Jev key is read only when `--jev` asks for it**, and sent only to Jev.
 - **The Talos checks read only, and never read a secret.** Commands are limited to their read-only
   subcommands (`talos_doctor/probe.py`), the database is asked in a read-only transaction, and Keychain items
   are looked up by name only.

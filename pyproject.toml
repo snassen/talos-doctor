@@ -1,6 +1,6 @@
 [project]
 name = "talos-doctor"
-version = "0.2.0"
+version = "0.3.0"
 description = "A pull request checker for coding agents: screens a change for prompt injection before an LLM reads it. Made for Talos, usable on any repository."
 readme = "README.md"
 license = "MIT"

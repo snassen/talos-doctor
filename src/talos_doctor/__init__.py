@@ -5,4 +5,4 @@ It reads only and never reads a secret. It runs on its own, before Talos is inst
 (`uvx --from git+<this repository's URL> talos-doctor`), and from inside Talos as `talos doctor`.
 """
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"

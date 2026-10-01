@@ -1,6 +1,13 @@
 # Changelog
 
-## [Unreleased]
+## [0.3.0] - 2026-10-01
+
+### Added
+- **The Jev stage**: `--jev` lets Jev (a classifier with no tools) read the change after the rules and answer three
+  bounded questions per piece. Steering a model at 0.3 or more means review; at 0.9, or at 0.5 with hiding or
+  pushing for approval, block (thresholds measured on 19,481 samples, docs/journal/). Estimated first, refused above
+  `--max-usd` (default $0.05). The key: TYPESAFE_API_KEY, or the Keychain item typesafe-api-key.
+- **The developer journal** (docs/journal/): what was built, measured and decided, step by step.
 
 ### Changed
 - The README leads with what talos-doctor mostly is: a pull request checker that makes a change safe for an
