@@ -1,6 +1,7 @@
 # talos-doctor
 
 Is this Mac ready for Talos (the `talos-core` repository, beside this one), and if not, what is the next step?
+And is this pull request safe for an agent to read?
 
 `talos-doctor` checks everything a Talos installation needs, in the order you set it up: the Mac, the
 code, the database, your personal part, each of your accounts, the model, the background services and the
@@ -43,9 +44,34 @@ talos-doctor --repo ~/code/talos   # when the Talos code is not in a usual place
 
 The exit code is 1 when a check failed, so a script can stop on it.
 
+## Screening a pull request before an agent reads it
+
+An agent that reviews a pull request reads everything in it, and a pull request can carry text written for
+the agent rather than for you: instructions hidden in invisible characters, in an HTML comment, in a base64
+blob, or just written plainly in a code comment. `talos-doctor pr` reads the change first, without any model:
+
+```bash
+talos-doctor pr octocat/hello-world 42 --out review/    # any public repository; GITHUB_TOKEN for private ones
+talos-doctor scan --diff change.patch --out review/      # a diff
+talos-doctor scan path/to/folder                         # files, every line as if added
+```
+
+- **block**: no agent should read this change, cleaned or not, before you have looked.
+- **review**: an agent may read `review/cleaned.diff` only: flagged lines are withheld («withheld: rule»),
+  hidden characters shown («U+200B»).
+- **clean**: no rule fired.
+
+`report.md`, `findings.json` and `cleaned.diff` never repeat a flagged text, so they are safe to give an agent.
+The pull request is read through GitHub's API as text; nothing is checked out and nothing in it runs. The rules
+are data (`src/talos_doctor/screen/rules.json`), each with the reason it exists.
+
+This is the deterministic first stage. A model screen (Jev, which has no tools and answers only with
+probabilities) comes next, and the rules are trained further in Talos. It screens what a model reads; running
+the change is a separate risk it does not cover.
+
 ## What it promises
 
-- **It reads only.** It runs a short list of commands, each limited to the subcommands that only look
+- **The checks read only.** They run a short list of commands, each limited to the subcommands that only look
   (`talos_doctor/probe.py`, `ALLOWED`); the database is asked in a read-only transaction; the only web request
   is to Talos Web on this Mac. The tests hold it.
 - **It never reads a secret.** Keychain items are looked up by name, which says whether one exists without

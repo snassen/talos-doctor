@@ -5,6 +5,8 @@
     talos-doctor --json           the results as JSON (for an agent or a script)
     talos-doctor --guide NAME     a step-by-step guide (talos-doctor --guides lists them)
     talos-doctor --repo PATH      where the Talos code is, when it is not in a usual place
+    talos-doctor pr OWNER/REPO N  screen a pull request before an agent reads it (talos_doctor.screen)
+    talos-doctor scan --diff FILE screen a diff, or files and folders
 
 It reads only, and never reads a secret (talos_doctor.probe). The exit code is 1 when a check failed.
 """
@@ -64,6 +66,10 @@ def report(results, ctx: Context) -> str:
 
 
 def main(argv: list[str] | None = None, probe: Probe | None = None) -> int:
+    argv = sys.argv[1:] if argv is None else argv
+    if argv[:1] in (["pr"], ["scan"]):
+        from talos_doctor.screen.cli import main as screen
+        return screen(argv)
     p = argparse.ArgumentParser(prog="talos-doctor", description="Is this Mac ready for Talos? Reads only.")
     p.add_argument("--version", action="version", version=f"talos-doctor {__version__}")
     p.add_argument("--json", action="store_true", help="the results as JSON")

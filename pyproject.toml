@@ -1,7 +1,7 @@
 [project]
 name = "talos-doctor"
-version = "0.1.0"
-description = "Checks that a Mac is ready for Talos, and says the next step when it is not. Reads only."
+version = "0.2.0"
+description = "Checks that a Mac is ready for Talos, and screens pull requests for prompt injection before an agent reads them."
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]

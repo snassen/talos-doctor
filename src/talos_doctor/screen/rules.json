@@ -1,0 +1,333 @@
+{
+ "schema": "talos-doctor/screen-rules/1",
+ "note": "The screen's deterministic rules (talos_doctor.screen). Rules as data: each has an id, a kind, a severity (block, flag, note) and why it exists.",
+ "rules": [
+  {
+   "id": "unicode.tags",
+   "version": 1,
+   "kind": "chars",
+   "severity": "block",
+   "applies": "all",
+   "why": "Unicode tag characters spell out text no screen shows (ASCII smuggling).",
+   "ranges": [
+    [
+     "E0000",
+     "E007F"
+    ]
+   ]
+  },
+  {
+   "id": "unicode.bidi",
+   "version": 1,
+   "kind": "chars",
+   "severity": "block",
+   "applies": "all",
+   "why": "Direction controls make code read differently from how it runs (Trojan Source).",
+   "ranges": [
+    [
+     "202A",
+     "202E"
+    ],
+    [
+     "2066",
+     "2069"
+    ]
+   ]
+  },
+  {
+   "id": "unicode.zero-width",
+   "version": 1,
+   "kind": "chars",
+   "severity": "flag",
+   "applies": "all",
+   "why": "Zero-width characters hide text between visible letters.",
+   "ranges": [
+    [
+     "200B",
+     "200D"
+    ],
+    [
+     "2060",
+     "2064"
+    ],
+    [
+     "180E",
+     "180E"
+    ]
+   ],
+   "ignore_bom_at_start": true
+  },
+  {
+   "id": "unicode.variation-run",
+   "version": 1,
+   "kind": "char_run",
+   "severity": "flag",
+   "applies": "all",
+   "why": "A run of variation selectors can carry hidden bytes (emoji smuggling).",
+   "ranges": [
+    [
+     "FE00",
+     "FE0F"
+    ],
+    [
+     "E0100",
+     "E01EF"
+    ]
+   ],
+   "min_run": 4
+  },
+  {
+   "id": "unicode.controls",
+   "version": 1,
+   "kind": "chars",
+   "severity": "flag",
+   "applies": "all",
+   "why": "Control characters other than tab and newline have no place in source text.",
+   "ranges": [
+    [
+     "0000",
+     "0008"
+    ],
+    [
+     "000B",
+     "000C"
+    ],
+    [
+     "000E",
+     "001F"
+    ],
+    [
+     "007F",
+     "009F"
+    ]
+   ]
+  },
+  {
+   "id": "unicode.private-use",
+   "version": 1,
+   "kind": "chars",
+   "severity": "flag",
+   "applies": "all",
+   "why": "Private-use characters render as anything, or nothing.",
+   "ranges": [
+    [
+     "E000",
+     "F8FF"
+    ],
+    [
+     "F0000",
+     "FFFFD"
+    ]
+   ]
+  },
+  {
+   "id": "unicode.mixed-script",
+   "version": 1,
+   "kind": "mixed_script",
+   "severity": "flag",
+   "applies": "all",
+   "why": "A word mixing Latin with Cyrillic or Greek letters looks like one thing and is another (homoglyphs)."
+  },
+  {
+   "id": "encoded.base64",
+   "version": 1,
+   "kind": "regex",
+   "severity": "flag",
+   "applies": "added",
+   "why": "A long base64 blob is text no reader sees; it is decoded and screened too.",
+   "pattern": "[A-Za-z0-9+/]{120,}={0,2}",
+   "decode": "base64"
+  },
+  {
+   "id": "encoded.escapes",
+   "version": 1,
+   "kind": "regex",
+   "severity": "flag",
+   "applies": "added",
+   "why": "A long run of escape sequences hides readable text; it is decoded and screened too.",
+   "pattern": "(?:\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}){20,}",
+   "decode": "escapes"
+  },
+  {
+   "id": "text.long-line",
+   "version": 1,
+   "kind": "long_line",
+   "severity": "flag",
+   "applies": "added",
+   "why": "A very long line hides its end off screen.",
+   "max_len": 1000
+  },
+  {
+   "id": "markup.html-comment",
+   "version": 1,
+   "kind": "regex",
+   "severity": "flag",
+   "applies": "added",
+   "why": "An HTML comment is invisible on the rendered page but read by a model.",
+   "pattern": "<!--(?:(?!-->).){20,}",
+   "paths": [
+    "\\.(md|markdown|html?|mdx|rst|txt)$"
+   ]
+  },
+  {
+   "id": "markup.hidden-style",
+   "version": 1,
+   "kind": "regex",
+   "severity": "flag",
+   "applies": "added",
+   "why": "Text styled to be invisible is still read by a model.",
+   "pattern": "(display\\s*:\\s*none|visibility\\s*:\\s*hidden|font-size\\s*:\\s*0(?:px|em|rem|pt)?\\s*[;\\\"']|opacity\\s*:\\s*0\\s*[;\\\"'])",
+   "paths": [
+    "\\.(md|markdown|html?|mdx|svg)$"
+   ],
+   "ignore_case": true
+  },
+  {
+   "id": "phrase.override",
+   "version": 1,
+   "kind": "regex",
+   "severity": "block",
+   "applies": "all",
+   "why": "Text telling a model to drop its instructions is an injection, wherever it stands.",
+   "pattern": "\\b(ignore|disregard|forget|override|bypass)\\b[^\\n]{0,30}\\b(all |any |the |your |my )?(previous|prior|above|earlier|preceding|original|system|initial)\\b[^\\n]{0,20}\\b(instructions?|prompts?|rules|directions|guidelines|context|messages?)\\b|\\b(ignorera|bortse från|glöm)\\b[^\\n]{0,30}\\b(tidigare|föregående|ovanstående|alla)\\b[^\\n]{0,20}\\b(instruktioner|regler|uppmaningar)\\b|\\b(ignoriere|vergiss|missachte)\\b[^\\n]{0,30}\\b(vorherigen|bisherigen|obigen|alle)\\b[^\\n]{0,20}\\b(anweisungen|anleitungen|regeln)\\b|\\b(ignore[zr]?|oublie[zr]?)\\b[^\\n]{0,30}\\b(les |toutes les )?(instructions|consignes) (précédentes|ci-dessus)\\b|\\b(ignora|olvida)\\b[^\\n]{0,30}\\b(las |todas las )?(instrucciones) (anteriores|previas)\\b",
+   "ignore_case": true
+  },
+  {
+   "id": "phrase.addressed-to-model",
+   "version": 2,
+   "kind": "regex",
+   "severity": "flag",
+   "applies": "all",
+   "why": "Text speaking to a model or agent, rather than to a person or the program.",
+   "pattern": "\\b(if you are|you are|you're) (an? )?(ai|a\\.i\\.|assistant|language model|llm|chatbot|coding agent|ai agent|autonomous agent|claude|chatgpt|gpt-?\\d|copilot|gemini|codex)\\b|\\b(note|message|instructions?) (to|for) (the |any )?(ai|llm|assistant|model|agent|reviewer bot|language model)\\b|\\b(dear|hey|hello|attention) (ai|llm|assistant|claude|chatgpt|copilot|gemini|agent)\\b|\\bas an? (ai|a\\.i\\.|ai assistant|language model|llm|large language model|ai agent|coding agent)\\b",
+   "ignore_case": true
+  },
+  {
+   "id": "phrase.chat-markup",
+   "version": 2,
+   "kind": "regex",
+   "severity": "block",
+   "applies": "all",
+   "why": "Chat-template tokens and turn markers only make sense to a model.",
+   "pattern": "<\\|(im_start|im_end|system|user|assistant|endoftext|begin_of_text|start_header_id|eot_id)\\|>|\\[/?INST\\]|<</?SYS>>|<(system|system_prompt)>[^`<\\n]{10,}|</(system|system_prompt)>|^\\s*(Human|Assistant|SYSTEM)\\s*:\\s"
+  },
+  {
+   "id": "phrase.system-prompt",
+   "version": 1,
+   "kind": "regex",
+   "severity": "flag",
+   "applies": "all",
+   "why": "Talk of system prompts and new instructions is aimed at a model.",
+   "pattern": "\\b(system prompt|new instructions|updated instructions|developer mode|jailbreak|do anything now)\\b",
+   "ignore_case": true
+  },
+  {
+   "id": "phrase.conceal",
+   "version": 1,
+   "kind": "regex",
+   "severity": "block",
+   "applies": "all",
+   "why": "Asking a reader to hide something from the user or to approve without looking is social engineering.",
+   "pattern": "\\b(do not|don't|never) (tell|inform|mention|report|show|alert|flag|warn)\\b[^\\n]{0,30}\\b(user|human|owner|maintainer|reviewer|anyone)\\b|\\bwithout (telling|asking|informing|notifying) (the )?(user|human|owner|maintainer)\\b|\\b(approve|merge|mark)\\b[^\\n]{0,20}\\b(this|the) (pr|pull request|change|diff)\\b[^\\n]{0,30}\\b(as )?(safe|approved|reviewed|harmless|without review)\\b",
+   "ignore_case": true
+  },
+  {
+   "id": "phrase.run-this",
+   "version": 1,
+   "kind": "regex",
+   "severity": "flag",
+   "applies": "all",
+   "why": "Text asking the reader to run something is aimed at an agent with a shell.",
+   "pattern": "\\b(run|execute|eval)\\b[^\\n]{0,20}\\b(the following|this|these) (command|commands|code|script|snippet)\\b|\\b(curl|wget)\\b[^\\n|]{0,200}\\|\\s*(ba|z)?sh\\b",
+   "ignore_case": true
+  },
+  {
+   "id": "code.secret-access",
+   "version": 1,
+   "kind": "regex",
+   "severity": "flag",
+   "applies": "added",
+   "why": "New code that reads secrets (keychains, SSH keys, tokens) needs a human look.",
+   "pattern": "find-generic-password[^\\n]*\\s-w\\b|\\.ssh/(id_|authorized_keys)|\\bkeyring\\.get_password\\b|GITHUB_TOKEN|AWS_SECRET|os\\.environ\\b[^\\n]{0,40}(token|secret|key|password)",
+   "ignore_case": true
+  },
+  {
+   "id": "path.agent-instructions",
+   "version": 1,
+   "kind": "path",
+   "severity": "flag",
+   "applies": "added",
+   "why": "Agents read this file as instructions to themselves.",
+   "paths": [
+    "(^|/)(AGENTS|CLAUDE|GEMINI|CODEX)\\.md$",
+    "(^|/)\\.cursorrules$",
+    "(^|/)\\.cursor/",
+    "(^|/)\\.windsurfrules$",
+    "(^|/)\\.clinerules",
+    "(^|/)\\.github/copilot-instructions\\.md$",
+    "(^|/)\\.claude/",
+    "(^|/)\\.agents/",
+    "(^|/)SKILL\\.md$",
+    "(^|/)\\.?mcp\\.json$",
+    "(^|/)\\.vscode/(settings|mcp)\\.json$",
+    "\\.prompt(\\.md)?$"
+   ]
+  },
+  {
+   "id": "path.runs-code",
+   "version": 1,
+   "kind": "path",
+   "severity": "flag",
+   "applies": "added",
+   "why": "This file runs code by itself: in CI, on install, on commit or on a test run.",
+   "paths": [
+    "(^|/)\\.github/workflows/",
+    "(^|/)\\.gitlab-ci\\.ya?ml$",
+    "(^|/)(Makefile|Justfile|Taskfile\\.ya?ml)$",
+    "(^|/)setup\\.py$",
+    "(^|/)conftest\\.py$",
+    "(^|/)\\.pre-commit-config\\.ya?ml$",
+    "(^|/)\\.husky/",
+    "(^|/)\\.git/hooks/",
+    "(^|/)Dockerfile$",
+    "(^|/)\\.devcontainer/"
+   ]
+  },
+  {
+   "id": "path.install-scripts",
+   "version": 1,
+   "kind": "regex",
+   "severity": "flag",
+   "applies": "added",
+   "why": "An install script runs on every machine that installs the package.",
+   "pattern": "\\\"(preinstall|install|postinstall|prepare|prepublish)\\\"\\s*:",
+   "paths": [
+    "(^|/)package\\.json$"
+   ]
+  },
+  {
+   "id": "path.git-plumbing",
+   "version": 1,
+   "kind": "path",
+   "severity": "flag",
+   "applies": "added",
+   "why": "Git attributes, submodules and LFS change what a checkout runs or fetches.",
+   "paths": [
+    "(^|/)\\.gitattributes$",
+    "(^|/)\\.gitmodules$",
+    "(^|/)\\.lfsconfig$"
+   ]
+  },
+  {
+   "id": "path.dependencies",
+   "version": 1,
+   "kind": "path",
+   "severity": "note",
+   "applies": "added",
+   "why": "New or changed dependencies are code from elsewhere.",
+   "paths": [
+    "(^|/)(requirements[^/]*\\.txt|pyproject\\.toml|package\\.json|Cargo\\.toml|go\\.mod|Gemfile|uv\\.lock|poetry\\.lock|package-lock\\.json|yarn\\.lock|pnpm-lock\\.yaml)$"
+   ]
+  }
+ ]
+}
