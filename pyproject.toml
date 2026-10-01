@@ -1,0 +1,25 @@
+[project]
+name = "talos-doctor"
+version = "0.1.0"
+description = "Checks that a Mac is ready for Talos, and says the next step when it is not. Reads only."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Talos contributors" }
+]
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+talos-doctor = "talos_doctor.cli:entry"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/talos_doctor"]
+
+[dependency-groups]
+dev = ["pytest>=8"]
