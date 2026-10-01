@@ -1,7 +1,7 @@
 [project]
 name = "talos-doctor"
 version = "0.2.0"
-description = "Checks that a Mac is ready for Talos, and screens pull requests for prompt injection before an agent reads them."
+description = "A pull request checker for coding agents: screens a change for prompt injection before an LLM reads it. Made for Talos, usable on any repository."
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]

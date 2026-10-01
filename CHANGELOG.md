@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+- The README leads with what talos-doctor mostly is: a pull request checker that makes a change safe for an
+  ordinary LLM to read, made for Talos and usable on any repository.
+
 ## [0.2.0] - 2026-10-01
 
 ### Added
