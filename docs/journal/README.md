@@ -10,6 +10,7 @@ the journal itself is safe for an agent to read.
 | 2026-10-01 | [2. A first trial of Jev](2026-10-01-2-jev-trial.md): 14 hand-made pieces, three questions |
 | 2026-10-01 | [3. The lab's first measurement](2026-10-01-3-first-measurement.md): six sources, 19,481 unique samples, the rules against Jev |
 | 2026-10-01 | [4. The Jev stage](2026-10-01-4-jev-stage.md): tiered thresholds from the measurement, live on a real change |
+| 2026-10-01 | [5. Mining rules from Jev's catches](2026-10-01-5-mining.md): first attempt mostly one dataset's habits; none accepted |
 | 2026-10-01 | [What comes next](next.md) |
 
 The measurements are made in Talos's screen lab (`talos screen`, in the talos-core repository), where the samples
